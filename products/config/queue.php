@@ -70,6 +70,25 @@ return [
             'block_for' => null,
             'after_commit' => false,
         ],
+        'rabbitmq' => [
+            'driver' => 'rabbitmq',
+            'factory_class' => \Enqueue\AmqpLib\AmqpConnectionFactory::class,
+            'host' => '127.0.0.1',
+            'port' => 5672,
+            'vhost' => '/',
+            'login' => 'guest',
+            'password' => 'guest',
+            'queue' => env('RABBITMQ_QUEUE', 'default'),
+            'options' => [
+                'queue' => [
+                    'declare' => true,
+                    'bind' => true,
+                    'durable' => true,
+                    'exclusive' => false,
+                    'auto_delete' => false,
+                ],
+            ],
+        ],
 
     ],
 
