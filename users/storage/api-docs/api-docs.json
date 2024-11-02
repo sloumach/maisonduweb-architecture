@@ -1,0 +1,268 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Admin Microservice API",
+        "description": "API for managing user roles and permissions in the admin microservice",
+        "contact": {
+            "email": "support@example.com"
+        },
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8000/api",
+            "description": "Admin API Server"
+        }
+    ],
+    "paths": {
+        "/admin/users/{user}/assign-role": {
+            "post": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Assign a role to a user",
+                "operationId": "assignRole",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "description": "User ID to assign role to",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "role": {
+                                        "description": "Role to assign",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Role assigned successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Role assigned successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User or role not found"
+                    }
+                }
+            }
+        },
+        "/admin/users/{user}/revoke-role": {
+            "post": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Revoke a role from a user",
+                "operationId": "revokeRole",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "description": "User ID to revoke role from",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "role": {
+                                        "description": "Role to revoke",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Role revoked successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Role revoked successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User or role not found"
+                    }
+                }
+            }
+        },
+        "/admin/roles/{roleId}/assign-permission": {
+            "post": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Assign permission to a role",
+                "operationId": "assignPermissionToRole",
+                "parameters": [
+                    {
+                        "name": "roleId",
+                        "in": "path",
+                        "description": "Role ID to assign permission to",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "permission": {
+                                        "description": "Permission to assign",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Permission assigned to role successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Permission assigned to role successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Role or permission not found"
+                    }
+                }
+            }
+        },
+        "/admin/roles/{roleId}/revoke-permission": {
+            "post": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Revoke permission from a role",
+                "operationId": "revokePermissionFromRole",
+                "parameters": [
+                    {
+                        "name": "roleId",
+                        "in": "path",
+                        "description": "Role ID to revoke permission from",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "permission": {
+                                        "description": "Permission to revoke",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Permission revoked from role successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Permission revoked from role successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Role or permission not found"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "RolePermissions": {
+                "title": "Role and Permissions",
+                "description": "Role and permissions manipulation model",
+                "properties": {
+                    "role": {
+                        "description": "Name of the role",
+                        "type": "string"
+                    },
+                    "permission": {
+                        "description": "Name of the permission",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Admin",
+            "description": "Operations about admin tasks"
+        }
+    ]
+}
