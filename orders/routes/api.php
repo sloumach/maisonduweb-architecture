@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\PaymentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -15,12 +16,12 @@ use App\Http\Controllers\OrderController;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+/* Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
-});
-Route::middleware('tit')->group(function () {
+}); */
+Route::middleware(['apiAuth', 'throttle:3,1'])->group(function () {
     Route::apiResource('orders', OrderController::class);
-    Route::post('/payments/process', [PaymentController::class, 'processPayment'])->middleware('auth:api');
+    Route::post('/payments/process', [PaymentController::class, 'processPayment']);
 
 });
 

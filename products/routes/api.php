@@ -18,7 +18,10 @@ use App\Http\Controllers\ProductController;
 /* Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 }); */
-Route::middleware('tit')->group(function () {
+Route::middleware(['apiAuth', 'throttle:3,1'])->group(function () {
+    // Route pour récupérer les produits par lots
+    Route::post('/products/batch', [ProductController::class, 'batchShow'])->name('product.batch.show');
+
     Route::get('/products', [ProductController::class, 'index'])->name('product.index');
     Route::post('/products', [ProductController::class, 'store'])->name('product.store');
     Route::get('/products/{id}', [ProductController::class, 'show'])->name('product.show');

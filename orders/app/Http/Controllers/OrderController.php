@@ -7,6 +7,7 @@ use stdClass;
 use App\Models\Order;
 use App\Models\OrderItem;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
@@ -16,57 +17,63 @@ use Illuminate\Support\Facades\Queue;
 class OrderController extends Controller
 {
     public function store(Request $request)
-    {
-        $token = $request->bearerToken();
-        $totalPrice = 0;
-        $items = collect($request->get('items'));
-        $orderData =[];
+{
+    $token = $request->bearerToken();
+    $totalPrice = 0;
+    $items = collect($request->get('items'));
+    $productIds = $items->pluck('product_id')->unique();
 
-        $order = new Order([
-            'user_id' => 3, // Assurez-vous de récupérer l'utilisateur réel ou de gérer l'authentification correctement
-            'total_price' => 0, // Initialiser à 0, recalculé plus bas
-            'status' => 'pending'
-        ]);
-        $order->save();  // Sauvegarder l'ordre initial pour générer un ID d'ordre
-
-        // Vérifier les produits, calculer le total et sauvegarder les détails de chaque item
-        $items->each(function ($item) use (&$totalPrice, &$orderData, $order, $token) {
+    try {
+        DB::transaction(function () use ($items, $productIds, $token, &$totalPrice, &$orderData) {
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $token,
-            ])->get("http://127.0.0.1:8000/api/products/{$item['product_id']}");
+            ])->post("http://127.0.0.1:8000/api/products/batch", ['ids' => $productIds->toArray()]);
 
             if ($response->successful()) {
-                $product = $response->json();
-                $itemPrice = $product['price'] * $item['quantity'];
-                $totalPrice += $itemPrice;
+                $products = collect($response->json());
+                $order = new Order([
+                    'user_id' => 3,
+                    'total_price' => 0,
+                    'status' => 'pending'
+                ]);
+                $order->save();
 
-                $orderItem = $order->orderItems()->create([
-                    'product_id' => $item['product_id'],
-                    'quantity' => $item['quantity'],
-                    'price' => $product['price']
+                $items->each(function ($item) use ($products, &$totalPrice, $order) {
+                    $product = $products->firstWhere('id', $item['product_id']);
+                    if ($product['quantity'] == 0) {
+                        throw new \Exception('Product unavailable');
+                    }
+                    $itemPrice = $product['price'] * $item['quantity'];
+                    $totalPrice += $itemPrice;
+
+                    $order->orderItems()->create([
+                        'product_id' => $item['product_id'],
+                        'quantity' => $item['quantity'],
+                        'price' => $product['price']
+                    ]);
+
+                    $orderData[] = [
+                        'order_id' => $order->id,
+                        'product_id' => $item['product_id'],
+                        'quantity' => $item['quantity'],
+                    ];
+                });
+
+                Queue::connection('rabbitmq')->push('App\Jobs\UpdateProductStock', [
+                    'data' => $orderData,
+                    'action' => 'decrement',
                 ]);
 
-                // Préparer les données pour RabbitMQ pour chaque article
-                $orderData[] = [
-                    'order_id' => $order->id,
-                    'product_id' => $item['product_id'],
-                    'quantity' => $item['quantity'],
-                ];
-
-                // Envoyer les données à RabbitMQ pour chaque article
-
+                $order->total_price = $totalPrice;
+                $order->save();
             }
         });
-        Queue::connection('rabbitmq')->push('App\Jobs\UpdateProductStock', [
-            'data' => $orderData  // Encapsulez vos données dans une clé 'data'
-        ]);
-
-        // Mettre à jour le total_price de la commande après tous les calculs
-        $order->total_price = $totalPrice;
-        $order->save(); // Sauvegarder à nouveau pour mettre à jour le total
-
         return response()->json(['order' => $order->load('orderItems')], 201);
+    } catch (\Exception $e) {
+        return response()->json(['error' => $e->getMessage()], 400);
     }
+}
+
 
 
     public function show($id)

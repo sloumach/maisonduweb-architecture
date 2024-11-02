@@ -19,28 +19,36 @@ class UpdateProductStock implements ShouldQueue
      * @return void
      */
 
-    public function fire($job, $data)
-    {
+     public function fire($job, $data)
+{
+    \Log::info('Starting job with data:', ['data' => $data]);
+    $action = $data['action'];
+    $items = $data['data'];  // Assurez-vous que ceci est toujours un tableau
 
-        \Log::info('Starting job with data:', ['data' => $data]);
-        $items = $data['data'];
-        \Log::info('Processing items', ['items' => $items]);
+    if (isset($items['product_id'])) { // S'il y a un 'product_id', c'est un seul item
+        $items = [$items];  // Encapsulez le seul item dans un tableau
+    }
 
-        foreach ($items as $item) {
-            // Log chaque item pour vérification
-            \Log::info('Processing item', ['item' => $item]);
+    foreach ($items as $item) {
 
-            // Traitement de chaque produit
+
+        // Vérifiez si $item est un tableau et contient 'product_id'
+        if (is_array($item) && isset($item['product_id'])) {
             $product = Product::find($item['product_id']);
             if ($product) {
-                $product->decrement('quantity', $item['quantity']);
-            }
-        }
 
-       /*  \Log::info('Order Data received:', $this->orderData);
-        $product = Product::find($this->orderData['product_id']);
-        if ($product) {
-            $product->decrement('stock', $this->orderData['quantity']);
-        } */
+                if ($action === 'decrement') {
+                    $product->decrement('quantity', $item['quantity']);
+                } elseif ($action === 'increment') {
+                    $product->increment('quantity', $item['quantity']);
+                }
+            }
+        } else {
+            \Log::error('Invalid item structure', ['item' => $item]);
+            // Gérer l'erreur ou signaler un problème
+        }
     }
+}
+
+
 }

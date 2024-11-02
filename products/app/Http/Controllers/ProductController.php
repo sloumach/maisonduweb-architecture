@@ -72,11 +72,18 @@ class ProductController extends Controller
      *     }
      * )
      */
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::all();
+        $page = $request->input('page', 1); // Récupère le numéro de la page de la requête, défaut à 1
+        $perPage = 10;
+
+        $products = Cache::remember("products_page_{$page}", 60, function () use ($perPage) {
+            return Product::paginate($perPage);
+        });
+
         return response()->json($products);
     }
+
 
     /**
      * @OA\Post(
@@ -160,13 +167,17 @@ class ProductController extends Controller
      * )
      */
     public function show($id)
-    {
-        $product = Product::find($id);
-        if (!$product) {
-            return response()->json(['message' => 'Product not found'], 404);
-        }
-        return response()->json($product);
+{
+    $product = Cache::remember("product_{$id}", 60, function () use ($id) {
+        return Product::find($id);
+    });
+
+    if (!$product) {
+        return response()->json(['message' => 'Product not found'], 404);
     }
+
+    return response()->json($product);
+}
 
     /**
      * @OA\Put(
